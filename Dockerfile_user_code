@@ -1,0 +1,29 @@
+FROM --platform=linux/amd64 python:3.10-slim
+
+# Checkout and install dagster libraries needed to run the gRPC server
+# exposing your repository to dagster-webserver and dagster-daemon, and to load the DagsterInstance
+
+RUN pip install --upgrade pip setuptools && \
+    pip install \
+    dagster \
+    dagster-postgres \
+    dagster-docker \
+    dagster-pipes \
+    pandas \
+    sqlalchemy \
+    psycopg2-binary
+
+
+# Add repository code
+
+WORKDIR /opt/dagster/app
+
+# Copy all necessary files
+COPY definitions.py MM_BIL.py external_code.py requirements.txt /opt/dagster/app/
+
+RUN pip install -r requirements.txt
+# Run dagster gRPC server on port 4000
+
+EXPOSE 4000
+
+CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4000", "-f", "definitions.py"]
